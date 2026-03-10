@@ -361,6 +361,7 @@ export default function AutoScaling() {
                                         <label className="block text-sm font-medium mb-1">Scale Up CPU Threshold (%)</label>
                                         <input
                                             type="number"
+                                            step="any"
                                             min="0"
                                             max="100"
                                             value={formData.scale_up_cpu_threshold}
@@ -372,6 +373,7 @@ export default function AutoScaling() {
                                         <label className="block text-sm font-medium mb-1">Scale Up Memory Threshold (%)</label>
                                         <input
                                             type="number"
+                                            step="any"
                                             min="0"
                                             max="100"
                                             value={formData.scale_up_memory_threshold}
@@ -386,6 +388,7 @@ export default function AutoScaling() {
                                         <label className="block text-sm font-medium mb-1">Scale Down CPU Threshold (%)</label>
                                         <input
                                             type="number"
+                                            step="any"
                                             min="0"
                                             max="100"
                                             value={formData.scale_down_cpu_threshold}
@@ -397,6 +400,7 @@ export default function AutoScaling() {
                                         <label className="block text-sm font-medium mb-1">Scale Down Memory Threshold (%)</label>
                                         <input
                                             type="number"
+                                            step="any"
                                             min="0"
                                             max="100"
                                             value={formData.scale_down_memory_threshold}

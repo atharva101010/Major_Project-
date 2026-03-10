@@ -24,6 +24,7 @@ const Billing: React.FC = () => {
     const [scenarioProvider, setScenarioProvider] = useState<Provider>('aws');
     const [scenarioResult, setScenarioResult] = useState<ScenarioSimulationResponse | null>(null);
     const [loadingScenario, setLoadingScenario] = useState(false);
+    const [selectedScenarioContainer, setSelectedScenarioContainer] = useState<number | null>(null);
 
     // Load containers on mount
     useEffect(() => {
@@ -105,6 +106,18 @@ const Billing: React.FC = () => {
             alert(`Error running simulation: ${error.message}`);
         } finally {
             setLoadingScenario(false);
+        }
+    };
+
+    const handleScenarioContainerSelect = (containerId: number) => {
+        setSelectedScenarioContainer(containerId);
+        if (!containerId) return;
+
+        const container = containers.find(c => c.id === containerId);
+        if (container) {
+            setCpuCores(container.cpu_limit);
+            // Convert MB to GB for the simulator
+            setMemoryGb(Math.ceil(container.memory_limit / 1024));
         }
     };
 
@@ -367,6 +380,29 @@ const Billing: React.FC = () => {
                         <div className="mb-8">
                             <h2 className="text-3xl font-bold text-slate-800 mb-2">Scenario-Based Cost Simulator</h2>
                             <p className="text-slate-600">Simulate costs for hypothetical scaling scenarios</p>
+                        </div>
+
+                        {/* Container Selection for Pre-fill */}
+                        <div className="mb-8 p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                📋 Select Running Container to Pre-fill Metrics (Optional)
+                            </label>
+                            <select
+                                value={selectedScenarioContainer || ''}
+                                onChange={(e) => handleScenarioContainerSelect(Number(e.target.value))}
+                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-black font-semibold focus:border-cyan-500 focus:outline-none appearance-none"
+                                style={{ backgroundColor: 'white', color: 'black', opacity: 1 }}
+                            >
+                                <option value="">Custom Configuration (Manual)</option>
+                                {containers.map((container) => (
+                                    <option key={container.id} value={container.id}>
+                                        {container.name} ({container.cpu_limit} Cores, {container.memory_limit}MB)
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-2 text-xs text-slate-500">
+                                Selecting a container will automatically adjust the CPU and Memory sliders below.
+                            </p>
                         </div>
 
                         {/* Resource Configuration */}

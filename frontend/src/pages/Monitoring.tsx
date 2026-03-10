@@ -67,7 +67,7 @@ export default function Monitoring() {
                         <span>Live (updates every 3s)</span>
                     </div>
                     <a
-                        href="http://localhost:3000/d/intelliscalesim-containers/intelliscalesim-container-monitoring?orgId=1&refresh=5s"
+                        href="http://localhost:3500/d/intelliscalesim-containers/intelliscalesim-container-monitoring?orgId=1&refresh=5s"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold rounded-lg shadow-md hover:from-orange-600 hover:to-pink-600 transition-all duration-200 hover:shadow-lg"

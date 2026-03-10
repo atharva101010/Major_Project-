@@ -280,6 +280,7 @@ class DockerService:
             
             # Extract CPU (format: "X.XX%")
             cpu_str = stats_json.get('CPUPerc', '0%').rstrip('%')
+            logger.info(f"🔍 Raw Docker Stats for {container_id[:12]}: CPUPerc={cpu_str}%")
             cpu_percent = float(cpu_str) if cpu_str else 0
             
             # Extract memory (format: "XXXMiB / YYYMiB" or "XXXGiB / YYYGiB")
@@ -291,9 +292,14 @@ class DockerService:
             else:
                 memory_mb = 0
             
+            # Extract Memory Percentage
+            mem_perc_str = stats_json.get('MemPerc', '0%').rstrip('%')
+            memory_percent = float(mem_perc_str) if mem_perc_str else 0
+            
             return {
                 "cpu_percent": cpu_percent,
-                "memory_usage_mb": memory_mb
+                "memory_usage_mb": memory_mb,
+                "memory_percent": memory_percent
             }
             
         except Exception as e:
@@ -349,13 +355,18 @@ class DockerService:
             elif 'B' in mem_usage_str:
                 memory_mb = float(mem_usage_str.replace('B', '')) / (1024.0 * 1024.0)
                 
+            # Extract Memory Percentage
+            mem_perc_str = stats_json.get('MemPerc', '0%').rstrip('%')
+            memory_percent = float(mem_perc_str) if mem_perc_str else 0
+            
             return {
                 "cpu_percent": cpu_percent,
-                "memory_mb": memory_mb
+                "memory_usage_mb": memory_mb, 
+                "memory_percent": memory_percent
             }
         except Exception as e:
             logger.warning(f"Failed to get sync container stats for {container_id}: {e}")
-            return {"cpu_percent": 0, "memory_mb": 0}
+            return {"cpu_percent": 0, "memory_usage_mb": 0, "memory_percent": 0}
 
 
 

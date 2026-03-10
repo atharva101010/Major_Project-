@@ -93,11 +93,13 @@ class AutoScalerService:
                 return False, "cooldown_active"
         
         # Check CPU threshold
-        if metrics['cpu_percent'] >= policy.scale_up_cpu_threshold:
+        cpu_val = metrics.get('cpu_percent', 0)
+        if cpu_val >= policy.scale_up_cpu_threshold:
             return True, "cpu"
         
         # Check memory threshold
-        if metrics['memory_percent'] >= policy.scale_up_memory_threshold:
+        mem_val = metrics.get('memory_percent', 0)
+        if mem_val >= policy.scale_up_memory_threshold:
             return True, "memory"
         
         return False, "thresholds_not_met"
@@ -117,8 +119,10 @@ class AutoScalerService:
                 return False, "cooldown_active"
         
         # Check both CPU and memory are below thresholds
-        if (metrics['cpu_percent'] < policy.scale_down_cpu_threshold and 
-            metrics['memory_percent'] < policy.scale_down_memory_threshold):
+        cpu_val = metrics.get('cpu_percent', 0)
+        mem_val = metrics.get('memory_percent', 0)
+        if (cpu_val < policy.scale_down_cpu_threshold and 
+            mem_val < policy.scale_down_memory_threshold):
             return True, "both_low"
         
         return False, "thresholds_not_met"
@@ -135,15 +139,39 @@ class AutoScalerService:
                 return False
             
             # Create new replica container record
-            # NOTE: Actual Docker deployment would happen here
-            # For now, just creating a pending record
+            replica_name = f"intelliscale-{parent.id}-{parent.name}-replica-{current_replicas}"
+            
+            # Run actual Docker container
+            # We use a simple port offset, in a real system we'd use find_available_port
+            external_port = parent.port + current_replicas
+            
+            logger.info(f"Scaling up: Running Docker container {replica_name} on port {external_port}")
+            
+            try:
+                # We need to detect internal port. For simplicity in this fix, we assume it's the same as parent's mapped internal port
+                # In current implementation, we move that logic to docker_service or similar
+                # For now, we'll try to find what the parent is mapped to
+                docker_container_id = self.docker_service.run_container(
+                    image=parent.image,
+                    name=replica_name,
+                    port=external_port,
+                    internal_port=parent.port, # This is a guess, but often students map 5000:5000
+                    cpu_limit=parent.cpu_limit or "0.5",
+                    mem_limit=parent.memory_limit or "512m"
+                )
+            except Exception as docker_err:
+                logger.error(f"Docker scale up failed: {docker_err}")
+                return False
+
             new_replica = Container(
                 name=f"{parent.name}-replica-{current_replicas}",
                 image=parent.image,
-                port=parent.port + current_replicas,  # Increment port for each replica
-                status='pending',
+                port=external_port,
+                container_id=docker_container_id,
+                status='running',
                 user_id=parent.user_id,
-                parent_id=parent.id
+                parent_id=parent.id,
+                started_at=datetime.now(timezone.utc)
             )
             
             self.db.add(new_replica)
@@ -165,7 +193,7 @@ class AutoScalerService:
             
             self.db.commit()
             
-            logger.info(f"Scaled up container {policy.container_id}: {current_replicas} → {current_replicas + 1}")
+            logger.info(f"Successfully scaled up container {policy.container_id}: {current_replicas} → {current_replicas + 1}")
             return True
             
         except Exception as e:
@@ -189,8 +217,16 @@ class AutoScalerService:
                 return False
             
             # Stop and remove replica
-            # NOTE: Actual Docker stop would happen here
+            if replica.container_id:
+                try:
+                    logger.info(f"Scaling down: Stopping and removing Docker container {replica.container_id[:12]}")
+                    self.docker_service.stop_container(replica.container_id)
+                    self.docker_service.remove_container(replica.container_id)
+                except Exception as docker_err:
+                    logger.warning(f"Failed to remove Docker container during scale down: {docker_err}")
+            
             replica.status = 'stopped'
+            replica.stopped_at = datetime.now(timezone.utc)
             
             # Log scaling event
             event = ScalingEvent(
@@ -225,6 +261,10 @@ class AutoScalerService:
             if not metrics:
                 logger.debug(f"No metrics available for container {policy.container_id}")
                 return
+            
+            cpu_val = metrics.get('cpu_percent', 0)
+            mem_val = metrics.get('memory_percent', 0)
+            logger.info(f"📊 Policy {policy.id} Evaluation: Container {policy.container_id} | CPU: {cpu_val}% (Target: {policy.scale_up_cpu_threshold}%) | Mem: {mem_val}%")
             
             current_replicas = self.get_current_replica_count(policy.container_id)
             

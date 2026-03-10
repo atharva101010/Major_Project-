@@ -63,7 +63,7 @@ async def autoscaler_background_task():
     
     while True:
         try:
-            await asyncio.sleep(30)  # Every 30 seconds
+            await asyncio.sleep(10)  # Every 10 seconds (increased from 30s)
             
             # Create new session for this iteration
             db = SessionLocal()

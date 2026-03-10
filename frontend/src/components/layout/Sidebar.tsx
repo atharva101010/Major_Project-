@@ -6,7 +6,10 @@ function Item({ to, label }: { to: string; label: string }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `block px-4 py-2 rounded-lg text-sm font-medium ${isActive ? 'bg-rose-100 text-rose-800' : 'text-slate-700 hover:bg-slate-100'}`
+        `block px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${isActive
+          ? 'bg-violet-600 text-white shadow-lg shadow-violet-200 translate-x-1'
+          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+        }`
       }
       end
     >
@@ -20,12 +23,20 @@ export default function Sidebar() {
   const role = user?.role || 'student'
 
   return (
-    <aside className="w-64 border-r border-slate-200 bg-white/70 backdrop-blur p-4 hidden md:block">
-      <div className="mb-6">
-        <div className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-rose-500 text-white font-semibold">IS</div>
-        <div className="mt-2 text-xs text-slate-500">Signed in as</div>
-        <div className="text-sm font-semibold capitalize">{role}</div>
+    <aside className="w-72 border-r border-slate-200 bg-white/40 backdrop-blur-xl p-6 hidden lg:block sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
+      <div className="mb-10">
+        <div className="flex items-center gap-3 p-2 bg-white/60 rounded-2xl border border-white shadow-sm mb-6">
+          <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-black shadow-inner">
+            IS
+          </div>
+          <div className="overflow-hidden text-ellipsis">
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Authenticated</div>
+            <div className="text-sm font-black text-slate-800 capitalize truncate">{role} Portal</div>
+          </div>
+        </div>
       </div>
+
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-4">Navigation</div>
       <nav className="space-y-1">
         {role === 'student' && (
           <>

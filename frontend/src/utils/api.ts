@@ -32,7 +32,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
     // Provide clearer error messages for authentication issues
     if (res.status === 401) {
-      throw new Error('Please log in to continue. Your session may have expired.');
+      // Use the backend's specific message if it exists (e.g. "Invalid email or password")
+      // Otherwise fallback to session expired.
+      const finalMessage = (message && message !== 'Unauthorized')
+        ? message
+        : 'Please log in to continue. Your session may have expired.';
+      throw new Error(finalMessage);
     }
 
     throw new Error(message);
@@ -354,6 +359,29 @@ export const billing = {
     }),
   getUserContainers: () =>
     request<{ containers: Container[] }>('/billing/containers', {
+      method: 'GET',
+      headers: authHeaders(),
+    }),
+};
+
+// Dashboard interfaces
+export interface DashboardMetrics {
+  total_containers: number;
+  running_containers: number;
+  stopped_containers: number;
+  recent_load_tests: {
+    id: number;
+    status: string;
+    created_at: string;
+    requests: number;
+    avg_response_time: number | null;
+  }[];
+  system_status: string;
+}
+
+export const dashboard = {
+  getMetrics: () =>
+    request<DashboardMetrics>('/dashboard/metrics', {
       method: 'GET',
       headers: authHeaders(),
     }),

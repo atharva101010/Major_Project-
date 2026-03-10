@@ -14,7 +14,7 @@ class ScalingPolicyBase(BaseModel):
     min_replicas: int = Field(default=1, ge=1, le=8)
     max_replicas: int = Field(default=8, ge=1, le=8)
     cooldown_period: int = Field(default=300, ge=60)  # Minimum 1 minute
-    evaluation_period: int = Field(default=60, ge=30)  # Minimum 30 seconds
+    evaluation_period: int = Field(default=60, ge=10)  # Minimum 10 seconds
     load_balancer_enabled: bool = True
     load_balancer_port: Optional[int] = Field(default=None, ge=1, le=65535)
 
